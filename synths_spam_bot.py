@@ -5,11 +5,11 @@ import praw
 
 DEFAULT_SUBREDDIT_NAME = 'synthesizers'
 
-MAX_AGE_TO_PROCESS = 3  # max age of post to process in minutes
-MAX_SUBMISSIONS_TO_LOOKBACK = 10  # max number of submissions per author to scan
+MAX_POST_AGE_TO_PROCESS = 3  # max age of post to process in minutes
+MAX_SUBMISSIONS_TO_LOOKBACK = 10  # max numbr of submissions per author to scan
 MAX_SUBMISSIONS_TO_PROCESS = 5  # max number of new submissions to scan
-POST_WINDOW_MINUTES = 5  # minutes between crossposts to consider spam
-SPAM_THRESHOLD = 5  # number of other subs posted to to consider spam
+CROSSPOST_WINDOW_MINUTES = 5  # minutes between crossposts to consider spam
+CROSSPOST_SPAM_THRESHOLD = 5  # number of other subs posted to to consider spam
 
 
 class SynthsSpamBot:
@@ -21,7 +21,7 @@ class SynthsSpamBot:
 
     def scan(self):
         for submission in self.subreddit.new(limit=MAX_SUBMISSIONS_TO_PROCESS):
-            if self.calc_submission_age(submission) <= MAX_AGE_TO_PROCESS:
+            if self.calc_submission_age(submission) <= MAX_POST_AGE_TO_PROCESS:
                 self.process_submission(submission)
 
     def process_submission(self, submission):
@@ -34,15 +34,18 @@ class SynthsSpamBot:
 
             if (other_submission.subreddit.display_name != DEFAULT_SUBREDDIT_NAME
                     and other_submission.title == submission.title
-                    and abs(other_submission_age - submission_age) <= POST_WINDOW_MINUTES):
+                    and abs(other_submission_age - submission_age) <= CROSSPOST_WINDOW_MINUTES):
                 subreddits.add(other_submission.subreddit.display_name)
 
         count = len(subreddits)
-        if count >= SPAM_THRESHOLD:
-            self.log('Flagged as crosspost spam', submission, count)
-            if not self.dry_run:
-                mod_note = f'Flagged as crosspost spam. Posted to {count} other subreddits.'
-                submission.mod.remove(mod_note=mod_note)
+        if count >= CROSSPOST_SPAM_THRESHOLD:
+            self.remove(submission, count)
+
+    def remove(self, submission, count):
+        self.log('Flagged as crosspost spam', submission, count)
+        if not self.dry_run:
+            mod_note = f'Flagged as crosspost spam. Posted to {count} other subreddits.'
+            submission.mod.remove(mod_note=mod_note)
 
     @ staticmethod
     def is_actionable(submission):
