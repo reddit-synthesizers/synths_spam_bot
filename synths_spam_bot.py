@@ -5,18 +5,18 @@ import praw
 
 DEFAULT_SUBREDDIT_NAME = 'synthesizers'
 
-MAX_POST_AGE_TO_PROCESS = 3  # max age of post to process in minutes
+MAX_POST_AGE_TO_PROCESS = 10  # max age of post to process in minutes
 MAX_SUBMISSIONS_TO_LOOKBACK = 10  # max numbr of submissions per author to scan
-MAX_SUBMISSIONS_TO_PROCESS = 5  # max number of new submissions to scan
+MAX_SUBMISSIONS_TO_PROCESS = 10  # max number of new submissions to scan
 CROSSPOST_WINDOW_MINUTES = 5  # minutes between crossposts to consider spam
 CROSSPOST_SPAM_THRESHOLD = 5  # number of other subs posted to to consider spam
 
 
 class SynthsSpamBot:
-    def __init__(self, subreddit_name=DEFAULT_SUBREDDIT_NAME, dry_run=False):
+    def __init__(self, subreddit_name=DEFAULT_SUBREDDIT_NAME, dry_run=False, reddit=None):
         self.dry_run = dry_run
 
-        self.reddit = praw.Reddit('SynthsSpamBot')
+        self.reddit = reddit if reddit else praw.Reddit('SynthsSpamBot')
         self.subreddit = self.reddit.subreddit(subreddit_name)
 
     def scan(self):
